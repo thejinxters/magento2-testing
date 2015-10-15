@@ -1,0 +1,136 @@
+<?php
+/**
+ * Copyright © 2015 Magento. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+
+// @codingStandardsIgnoreFile
+
+ /** @var $block \Magento\ConfigurableProduct\Block\Adminhtml\Product\Edit\Tab\Super\Config */
+?>
+<div class="entry-edit form-inline" id="<?php /* @escapeNotVerified */ echo $block->getId() ?>" data-panel="product-variations">
+    <div data-bind="scope: 'variation-steps-wizard'" class="product-create-configuration">
+        <div class="product-create-configuration-info">
+            <div class="note" data-role="product-create-configuration-info">
+                <?= /* @escapeNotVerified */  __('Configurable products allow customers to choose options (Ex: shirt color).
+            You need to create a simple product for each configuration (Ex: a product for each color).');?>
+            </div>
+        </div>
+        <div class="product-create-configuration-actions">
+            <div class="product-create-configuration-action">
+                <button type="button" data-action="open-steps-wizard" title="Create Product Configurations"
+                        class="action-secondary" data-bind="click: open">
+                <span data-role="button-label" data-edit-label="<?= /* @escapeNotVerified */  __('Edit Configurations') ?>">
+                    <?= /* @escapeNotVerified */  $block->getProduct()->getId() && $block->isConfigurableProduct()
+                        ? __('Edit Configurations')
+                        : __('Create Configurations')
+                    ?>
+                </span>
+                </button>
+            </div>
+            <div class="product-create-configuration-action" data-bind="scope: 'configurableProductGrid'">
+                <button class="action-tertiary action-menu-item" type="button" data-action="choose"
+                        data-bind="click: showManuallyGrid, visible: button">
+                    <?= /* @noEscape */ __('Add Products Manually');?>
+                </button>
+            </div>
+        </div>
+    </div>
+    <fieldset class="fieldset">
+        <?php echo $block->getChildHtml('matrix'); ?>
+
+        <!-- Select Associated Product popup -->
+        <div data-grid-id="associated-products-container">
+            <div class="admin__data-grid-outer-wrap" data-bind="scope: 'configurable_associated_product_listing.configurable_associated_product_listing'">
+                <div data-role="spinner" data-component="configurable_associated_product_listing.configurable_associated_product_listing.product_columns" class="admin__data-grid-loading-mask">
+                    <div class="spinner">
+                        <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+                    </div>
+                </div>
+                <!-- ko template: getTemplate() --><!-- /ko -->
+
+            </div>
+        </div>
+
+        <input type="hidden" name="affect_configurable_product_attributes" value="1" />
+    </fieldset>
+</div>
+<script>
+require([
+    'jquery',
+    'Magento_ConfigurableProduct/js/advanced-pricing-handler',
+    'Magento_ConfigurableProduct/js/options/price-type-handler',
+    'collapsible',
+    'Magento_Ui/js/modal/modal',
+    'mage/translate',
+    'domReady!'
+], function($, advancedPricingHandler, priceTypeHandler){
+    'use strict';
+
+    advancedPricingHandler.init();
+    priceTypeHandler.init();
+
+    var blockId = '#<?= /* @noEscape */ $block->getId()?>',
+        hasVariations = <?= /* @noEscape */ $block->isConfigurableProduct() ? 'true' : 'false' ?>,
+        setElementDisabled = function ($element, state, triggerEvent) {
+            if (!$element.is('[data-locked]')) {
+                $element.prop('disabled', state);
+    
+                if (triggerEvent) {
+                    $element.trigger('change');
+                }
+            }
+        },
+        configurableTypeHandler = function (isConfigurable) {
+            isConfigurable = hasVariations ? true : isConfigurable;
+            $('[data-form=edit-product]').trigger("change_configurable_type", isConfigurable);
+        };
+
+    $('[data-tab=<?= /* @noEscape */ $block->getTabId()?>]')
+        .on('dimensionsChanged', function (event, data) {
+            var suggestContainer = $('#product-template-suggest-container .action-dropdown > .action-toggle');
+            if (data.opened) {
+                suggestContainer
+                    .addClass('disabled')
+                    .prop('disabled', true);
+                $(blockId + ' input[name="attributes[]"]').prop('disabled', false);
+                $('#inventory_qty').prop('disabled', true);
+                $('#inventory_stock_availability').removeProp('disabled');
+                setElementDisabled($('#qty'), true, true);
+                setElementDisabled($('#quantity_and_stock_status'), false, false);
+                configurableTypeHandler(true);
+            } else {
+                suggestContainer
+                    .removeClass('disabled')
+                    .removeProp('disabled');
+                $('#inventory_qty').removeProp('disabled');
+                $('#inventory_stock_availability').prop('disabled', true);
+                setElementDisabled($('#quantity_and_stock_status'), true, false);
+                setElementDisabled($('#qty'), false, true);
+                configurableTypeHandler(false);
+            }
+        })
+        .on('collapsiblecreated', function() {
+            $(this).collapsible(hasVariations ? 'activate' : 'deactivate');
+        });
+});
+</script>
+<script type="text/x-magento-init">
+    {
+        "*": {
+            "Magento_Ui/js/core/app": {
+                "components": {
+                    "configurableProductGrid": {
+                        "component": "Magento_ConfigurableProduct/js/variations/product-grid",
+                        "productsFilter": "configurable_associated_product_listing.configurable_associated_product_listing.listing_top.listing_filters",
+                        "productsProvider": "configurable_associated_product_listing.data_source",
+                        "productsMassAction": "configurable_associated_product_listing.configurable_associated_product_listing.product_columns.ids",
+                        "productsColumns": "configurable_associated_product_listing.configurable_associated_product_listing.product_columns",
+                        "productsGridUrl": "<?= /* @noEscape */ $block->getUrl('catalog/product/associated_grid', ['componentJson' => true])?>",
+                        "configurableVariations": "configurableVariations"
+                    }
+                }
+            }
+        }
+    }
+</script>

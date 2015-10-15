@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © 2015 Magento. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="events.xsd">
+    <preset name="base">
+        <observer class="Magento\Mtf\System\Observer\WebapiResponse">
+            <tag name="webapi_failed"/>
+        </observer>
+    </preset>
+</config>
